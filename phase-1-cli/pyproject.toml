@@ -1,5 +1,5 @@
 [project]
-name = "phase-1-cli"
+name = "toony-2do"
 version = "0.1.0"
 description = "A beautiful, interactive terminal todo application with TUI and CLI interfaces"
 readme = "README.md"
@@ -37,8 +37,11 @@ Repository = "https://github.com/marjan-ahmed/evolution-todo-sdd"
 Issues = "https://github.com/marjan-ahmed/evolution-todo-sdd/issues"
 
 [project.scripts]
-phase-1-cli = "phase_1_cli.main:cli_app"
+toony-2do = "phase_1_cli.main:cli_app"
 todo = "phase_1_cli.main:cli_app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/phase_1_cli"]
 
 [build-system]
 requires = ["hatchling"]

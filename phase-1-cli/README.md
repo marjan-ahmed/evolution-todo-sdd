@@ -1,4 +1,4 @@
-# Modern Terminal Todo Application
+# Toony 2do - Modern Terminal Todo Application
 
 A beautiful, interactive command-line todo application built with Python, featuring both a Text User Interface (TUI) and traditional CLI commands.
 
@@ -6,7 +6,7 @@ A beautiful, interactive command-line todo application built with Python, featur
 
 - **Interactive TUI** - Full-featured text-based user interface with keyboard navigation
 - **CLI Commands** - Quick task management from the command line
-- **ASCII Art Banner** - Beautiful pyfiglet-powered branding
+- **ASCII Art Banner** - Beautiful pyfiglet-powered "Toony 2do" branding
 - **Rich Formatting** - Colorful output with rich tables and formatting
 - **Keyboard Shortcuts** - Efficient navigation and task management
 - **Task Statistics** - Real-time progress tracking
@@ -16,7 +16,7 @@ A beautiful, interactive command-line todo application built with Python, featur
 ### From PyPI
 
 ```bash
-pip install phase-1-cli
+pip install toony-2do
 ```
 
 ### From Source
@@ -34,9 +34,9 @@ pip install -e .
 Launch the full interactive interface:
 
 ```bash
-phase-1-cli ui
+toony-2do ui
 # or simply
-phase-1-cli
+toony-2do
 ```
 
 **Keyboard Shortcuts:**
@@ -53,22 +53,22 @@ Quick task management from the command line:
 
 ```bash
 # Add a new task
-phase-1-cli add "Buy groceries" --desc "Milk, eggs, bread"
+toony-2do add "Buy groceries" --desc "Milk, eggs, bread"
 todo add "Call doctor"
 
 # List all tasks
-phase-1-cli list
+toony-2do list
 todo list --pending    # Show only pending tasks
 todo list --completed  # Show only completed tasks
 
 # Mark task as complete
-phase-1-cli complete 1
+toony-2do complete 1
 
 # Delete a task
-phase-1-cli delete 2 --yes  # Skip confirmation
+toony-2do delete 2 --yes  # Skip confirmation
 
 # Show statistics
-phase-1-cli stats
+toony-2do stats
 ```
 
 ## Features in Detail
@@ -76,7 +76,7 @@ phase-1-cli stats
 ### Text User Interface (TUI)
 
 The TUI provides a rich, interactive experience with:
-- **ASCII Art Header** - Eye-catching "TODO APP" banner
+- **ASCII Art Header** - Eye-catching "Toony 2do" banner
 - **Live Statistics Panel** - Shows total, pending, completed tasks and progress percentage
 - **Data Table** - Clean display of all tasks with status indicators
 - **Modal Dialogs** - User-friendly forms for adding and editing tasks

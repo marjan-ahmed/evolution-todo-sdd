@@ -1,19 +1,15 @@
 """
-Interactive CLI Todo Application
-Built with Textual framework for beautiful, interactive terminal UI
+Modern Terminal Todo App
+Built with Textual framework for beautiful, interactive CLI experience
 """
 
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional
 
-import pyfiglet
-import typer
-from rich.console import Console
-from rich.table import Table as RichTable
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import (
     Button,
@@ -23,10 +19,6 @@ from textual.widgets import (
     Input,
     Static,
 )
-
-# CLI app instance
-cli_app = typer.Typer(help="Modern Terminal Todo Application")
-console = Console()
 
 
 # ============================================================================
@@ -56,12 +48,6 @@ class TaskManager:
 
     def add_task(self, title: str, description: str = "") -> Task:
         """Add a new task"""
-        title = title.strip()
-        description = description.strip()
-
-        if not title:
-            raise ValueError("Title cannot be empty")
-
         task = Task(
             id=self.next_id,
             title=title,
@@ -78,19 +64,13 @@ class TaskManager:
     def update_task(self, task_id: int, title: str = None, description: str = None) -> bool:
         """Update task fields"""
         task = self.get_task(task_id)
-        if not task:
-            return False
-
-        if title is not None:
-            title = title.strip()
-            if not title:
-                raise ValueError("Title cannot be empty")
-            task.title = title
-
-        if description is not None:
-            task.description = description.strip()
-
-        return True
+        if task:
+            if title is not None:
+                task.title = title
+            if description is not None:
+                task.description = description
+            return True
+        return False
 
     def delete_task(self, task_id: int) -> bool:
         """Delete a task"""
@@ -109,11 +89,11 @@ class TaskManager:
         return False
 
     def get_stats(self) -> dict:
-        """Calculate task statistics"""
+        """Get task statistics"""
         total = len(self.tasks)
         completed = sum(1 for t in self.tasks if t.completed)
         pending = total - completed
-        percentage = (completed / total * 100) if total > 0 else 0.0
+        percentage = (completed / total * 100) if total > 0 else 0
 
         return {
             "total": total,
@@ -187,6 +167,7 @@ class AddTaskScreen(ModalScreen[dict]):
             description = self.query_one("#description", Input).value.strip()
 
             if not title:
+                # Could show error notification here
                 return
 
             self.dismiss({"title": title, "description": description})
@@ -234,24 +215,20 @@ class EditTaskScreen(ModalScreen[dict]):
     }
     """
 
-    BINDINGS = [
-        Binding("escape", "cancel", "Cancel"),
-    ]
-
     def __init__(self, task: Task):
         super().__init__()
-        self._todo_task = task
+        self.task = task
 
     def compose(self) -> ComposeResult:
         with Container(id="dialog"):
             yield Static("✏️ Edit Task", classes="dialog-title")
             yield Input(
-                value=self._todo_task.title,
+                value=self.task.title,
                 placeholder="Task title",
                 id="title"
             )
             yield Input(
-                value=self._todo_task.description,
+                value=self.task.description,
                 placeholder="Description",
                 id="description"
             )
@@ -274,9 +251,6 @@ class EditTaskScreen(ModalScreen[dict]):
             self.dismiss({"title": title, "description": description})
         else:
             self.dismiss(None)
-
-    def action_cancel(self) -> None:
-        self.dismiss(None)
 
 
 class ConfirmDialog(ModalScreen[bool]):
@@ -317,10 +291,6 @@ class ConfirmDialog(ModalScreen[bool]):
     }
     """
 
-    BINDINGS = [
-        Binding("escape", "cancel", "Cancel"),
-    ]
-
     def __init__(self, title: str, message: str):
         super().__init__()
         self.title_text = title
@@ -338,9 +308,6 @@ class ConfirmDialog(ModalScreen[bool]):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(event.button.id == "confirm")
 
-    def action_cancel(self) -> None:
-        self.dismiss(False)
-
 
 # ============================================================================
 # Main Application
@@ -352,15 +319,6 @@ class TodoApp(App):
     CSS = """
     Screen {
         background: $surface;
-    }
-
-    #banner {
-        height: auto;
-        background: $primary;
-        color: $text;
-        text-align: center;
-        padding: 1;
-        border: solid $accent;
     }
 
     #stats {
@@ -401,10 +359,7 @@ class TodoApp(App):
         self.task_manager = TaskManager()
 
     def compose(self) -> ComposeResult:
-        # Create ASCII art banner
-        banner_text = pyfiglet.figlet_format("Toony 2do", font="slant")
         yield Header(show_clock=True)
-        yield Static(banner_text, id="banner")
         yield Static(id="stats")
         yield DataTable(zebra_stripes=True, cursor_type="row")
         yield Footer()
@@ -460,15 +415,11 @@ class TodoApp(App):
         """Add a new task"""
         def handle_result(result: dict | None) -> None:
             if result:
-                try:
-                    self.task_manager.add_task(
-                        result["title"],
-                        result["description"]
-                    )
-                    self.refresh_ui()
-                except ValueError as e:
-                    # Handle validation error (empty title)
-                    pass
+                self.task_manager.add_task(
+                    result["title"],
+                    result["description"]
+                )
+                self.refresh_ui()
 
         self.push_screen(AddTaskScreen(), handle_result)
 
@@ -486,15 +437,12 @@ class TodoApp(App):
 
         def handle_result(result: dict | None) -> None:
             if result:
-                try:
-                    self.task_manager.update_task(
-                        task.id,
-                        result["title"],
-                        result["description"]
-                    )
-                    self.refresh_ui()
-                except ValueError as e:
-                    pass
+                self.task_manager.update_task(
+                    task.id,
+                    result["title"],
+                    result["description"]
+                )
+                self.refresh_ui()
 
         self.push_screen(EditTaskScreen(task), handle_result)
 
@@ -536,137 +484,11 @@ class TodoApp(App):
         self.refresh_ui()
 
 
-# ============================================================================
-# CLI Commands (Typer Interface)
-# ============================================================================
-
-# Shared task manager for CLI operations
-cli_task_manager = TaskManager()
-
-
-@cli_app.command("ui")
-def launch_ui():
-    """Launch the interactive TUI (Text User Interface)"""
-    console.print(pyfiglet.figlet_format("Toony 2do", font="slant"), style="bold cyan")
-    console.print("Launching interactive UI...\n", style="green")
+def main():
+    """Entry point"""
     app = TodoApp()
     app.run()
 
 
-@cli_app.command("add")
-def add_task_cli(
-    title: str = typer.Argument(..., help="Task title"),
-    description: str = typer.Option("", "--desc", "-d", help="Task description")
-):
-    """Add a new task from the command line"""
-    try:
-        task = cli_task_manager.add_task(title, description)
-        console.print(f"✅ Task added: {task.title}", style="bold green")
-        console.print(f"   ID: {task.id}", style="dim")
-        if description:
-            console.print(f"   Description: {description}", style="dim")
-    except ValueError as e:
-        console.print(f"❌ Error: {e}", style="bold red")
-        raise typer.Exit(1)
-
-
-@cli_app.command("list")
-def list_tasks_cli(
-    completed: bool = typer.Option(None, "--completed", "-c", help="Show only completed tasks"),
-    pending: bool = typer.Option(None, "--pending", "-p", help="Show only pending tasks")
-):
-    """List all tasks"""
-    tasks = cli_task_manager.tasks
-
-    # Filter tasks based on flags
-    if completed:
-        tasks = [t for t in tasks if t.completed]
-    elif pending:
-        tasks = [t for t in tasks if not t.completed]
-
-    if not tasks:
-        console.print("📭 No tasks found.", style="yellow")
-        return
-
-    # Create rich table
-    table = RichTable(title="📋 Tasks", show_header=True, header_style="bold magenta")
-    table.add_column("ID", style="cyan", justify="right")
-    table.add_column("Status", justify="center")
-    table.add_column("Title", style="white")
-    table.add_column("Description", style="dim")
-
-    for task in tasks:
-        status = "☑" if task.completed else "☐"
-        status_style = "green" if task.completed else "yellow"
-        table.add_row(
-            str(task.id),
-            f"[{status_style}]{status}[/{status_style}]",
-            task.title,
-            task.description
-        )
-
-    console.print(table)
-
-    # Show stats
-    stats = cli_task_manager.get_stats()
-    console.print(
-        f"\n📊 Total: {stats['total']} | "
-        f"⏳ Pending: {stats['pending']} | "
-        f"✅ Completed: {stats['completed']} | "
-        f"📈 Progress: {stats['percentage']:.1f}%",
-        style="bold"
-    )
-
-
-@cli_app.command("complete")
-def complete_task_cli(task_id: int = typer.Argument(..., help="Task ID to mark as complete")):
-    """Mark a task as completed"""
-    task = cli_task_manager.get_task(task_id)
-    if not task:
-        console.print(f"❌ Task {task_id} not found", style="bold red")
-        raise typer.Exit(1)
-
-    task.completed = True
-    console.print(f"✅ Task {task_id} marked as complete: {task.title}", style="bold green")
-
-
-@cli_app.command("delete")
-def delete_task_cli(
-    task_id: int = typer.Argument(..., help="Task ID to delete"),
-    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation")
-):
-    """Delete a task"""
-    task = cli_task_manager.get_task(task_id)
-    if not task:
-        console.print(f"❌ Task {task_id} not found", style="bold red")
-        raise typer.Exit(1)
-
-    if not yes:
-        confirm = typer.confirm(f"Delete task '{task.title}'?")
-        if not confirm:
-            console.print("Cancelled.", style="yellow")
-            raise typer.Exit(0)
-
-    cli_task_manager.delete_task(task_id)
-    console.print(f"🗑️  Task {task_id} deleted", style="bold red")
-
-
-@cli_app.command("stats")
-def show_stats_cli():
-    """Show task statistics"""
-    stats = cli_task_manager.get_stats()
-
-    console.print(pyfiglet.figlet_format("STATS", font="banner3"), style="bold blue")
-    console.print(f"📊 Total Tasks: {stats['total']}", style="bold")
-    console.print(f"⏳ Pending: {stats['pending']}", style="yellow")
-    console.print(f"✅ Completed: {stats['completed']}", style="green")
-    console.print(f"📈 Progress: {stats['percentage']:.1f}%", style="cyan")
-
-
-def run() -> None:
-    """Entry point - launch UI by default"""
-    launch_ui()
-
-
 if __name__ == "__main__":
-    cli_app()
+    main()
