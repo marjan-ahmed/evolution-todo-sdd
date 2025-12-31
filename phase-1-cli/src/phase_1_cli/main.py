@@ -3,8 +3,10 @@ Interactive CLI Todo Application
 Built with Textual framework for beautiful, interactive terminal UI
 """
 
-from dataclasses import dataclass, field
+import json
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 import pyfiglet
@@ -32,6 +34,9 @@ cli_app = typer.Typer(
 )
 console = Console()
 
+# Storage file path
+STORAGE_FILE = Path.home() / ".toony2do" / "tasks.json"
+
 
 # ============================================================================
 # Data Models (Business Logic - Decoupled from UI)
@@ -50,13 +55,55 @@ class Task:
         status = "☑" if self.completed else "☐"
         return f"{status} {self.title}"
 
+    def to_dict(self) -> dict:
+        """Convert task to dictionary"""
+        data = asdict(self)
+        data["created_at"] = self.created_at.isoformat()
+        return data
+
+    @staticmethod
+    def from_dict(data: dict) -> "Task":
+        """Create task from dictionary"""
+        data = data.copy()
+        data["created_at"] = datetime.fromisoformat(data["created_at"])
+        return Task(**data)
+
 
 class TaskManager:
-    """Manages todo tasks in memory - Business logic layer"""
+    """Manages todo tasks with file persistence"""
 
-    def __init__(self):
+    def __init__(self, storage_file: Path = STORAGE_FILE):
+        self.storage_file = storage_file
         self.tasks: List[Task] = []
         self.next_id = 1
+        self._load_tasks()
+
+    def _load_tasks(self) -> None:
+        """Load tasks from storage file"""
+        if not self.storage_file.exists():
+            return
+
+        try:
+            with open(self.storage_file, "r") as f:
+                data = json.load(f)
+                self.tasks = [Task.from_dict(task_data) for task_data in data.get("tasks", [])]
+                self.next_id = data.get("next_id", 1)
+        except (json.JSONDecodeError, KeyError, ValueError):
+            # If file is corrupted, start fresh
+            self.tasks = []
+            self.next_id = 1
+
+    def _save_tasks(self) -> None:
+        """Save tasks to storage file"""
+        self.storage_file.parent.mkdir(parents=True, exist_ok=True)
+
+        data = {
+            "tasks": [task.to_dict() for task in self.tasks],
+            "next_id": self.next_id
+        }
+
+        with open(self.storage_file, "w") as f:
+            json.dump(data, f, indent=2)
 
     def add_task(self, title: str, description: str = "") -> Task:
         """Add a new task"""
@@ -73,6 +120,7 @@ class TaskManager:
         )
         self.tasks.append(task)
         self.next_id += 1
+        self._save_tasks()
         return task
 
     def get_task(self, task_id: int) -> Optional[Task]:
@@ -94,6 +142,7 @@ class TaskManager:
         if description is not None:
             task.description = description.strip()
 
+        self._save_tasks()
         return True
 
     def delete_task(self, task_id: int) -> bool:
@@ -101,6 +150,7 @@ class TaskManager:
         task = self.get_task(task_id)
         if task:
             self.tasks.remove(task)
+            self._save_tasks()
             return True
         return False
 
@@ -109,6 +159,7 @@ class TaskManager:
         task = self.get_task(task_id)
         if task:
             task.completed = not task.completed
+            self._save_tasks()
             return True
         return False
 
@@ -418,11 +469,6 @@ class TodoApp(App):
         table = self.query_one(DataTable)
         table.add_columns("ID", "Status", "Title", "Description")
         table.focus()
-
-        # Add some demo tasks
-        self.task_manager.add_task("Welcome to Todo App", "Press 'a' to add new task")
-        self.task_manager.add_task("Try keyboard shortcuts", "Press 'space' to toggle, 'd' to delete")
-        self.task_manager.add_task("Check out the stats", "See the stats panel at the top")
 
         self.refresh_ui()
 
