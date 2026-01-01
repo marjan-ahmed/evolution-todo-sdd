@@ -1,6 +1,6 @@
 [project]
 name = "toony-2do"
-version = "0.2.1"
+version = "0.2.3"
 description = "A beautiful, interactive terminal todo application with TUI and CLI interfaces"
 readme = "README.md"
 authors = [

@@ -52,7 +52,7 @@ class Task:
     created_at: datetime = field(default_factory=datetime.now)
 
     def __str__(self) -> str:
-        status = "☑" if self.completed else "☐"
+        status = "[x]" if self.completed else "[ ]"
         return f"{status} {self.title}"
 
     def to_dict(self) -> dict:
@@ -491,7 +491,7 @@ class TodoApp(App):
         table.clear()
 
         for task in self.task_manager.tasks:
-            status = "☑" if task.completed else "☐"
+            status = "[x]" if task.completed else "[ ]"
             style = "completed" if task.completed else "pending"
 
             table.add_row(
@@ -508,10 +508,10 @@ class TodoApp(App):
         stats_widget = self.query_one("#stats", Static)
 
         stats_widget.update(
-            f"📊 Total: {stats['total']} | "
-            f"⏳ Pending: {stats['pending']} | "
-            f"✅ Completed: {stats['completed']} | "
-            f"📈 Progress: {stats['percentage']:.1f}%"
+            f"Stats Total: {stats['total']} | "
+            f"[Pending] Pending: {stats['pending']} | "
+            f"[OK] Completed: {stats['completed']} | "
+            f"[Progress] Progress: {stats['percentage']:.1f}%"
         )
 
     def action_add_task(self) -> None:
@@ -575,7 +575,7 @@ class TodoApp(App):
 
         self.push_screen(
             ConfirmDialog(
-                "🗑️ Delete Task",
+                "Delete Task",
                 f"Delete '{task.title}'?"
             ),
             handle_confirm
@@ -619,12 +619,12 @@ def add_task_cli(
     """Add a new task from the command line"""
     try:
         task = cli_task_manager.add_task(title, description)
-        console.print(f"✅ Task added: {task.title}", style="bold green")
+        console.print(f"[OK] Task added: {task.title}", style="bold green")
         console.print(f"   ID: {task.id}", style="dim")
         if description:
             console.print(f"   Description: {description}", style="dim")
     except ValueError as e:
-        console.print(f"❌ Error: {e}", style="bold red")
+        console.print(f"[ERROR] Error: {e}", style="bold red")
         raise typer.Exit(1)
 
 
@@ -643,7 +643,7 @@ def list_tasks_cli(
         tasks = [t for t in tasks if not t.completed]
 
     if not tasks:
-        console.print("📭 No tasks found.", style="yellow")
+        console.print("No tasks No tasks found.", style="yellow")
         return
 
     # Create rich table
@@ -654,7 +654,7 @@ def list_tasks_cli(
     table.add_column("Description", style="dim")
 
     for task in tasks:
-        status = "☑" if task.completed else "☐"
+        status = "[x]" if task.completed else "[ ]"
         status_style = "green" if task.completed else "yellow"
         table.add_row(
             str(task.id),
@@ -668,10 +668,10 @@ def list_tasks_cli(
     # Show stats
     stats = cli_task_manager.get_stats()
     console.print(
-        f"\n📊 Total: {stats['total']} | "
-        f"⏳ Pending: {stats['pending']} | "
-        f"✅ Completed: {stats['completed']} | "
-        f"📈 Progress: {stats['percentage']:.1f}%",
+        f"\nStats Total: {stats['total']} | "
+        f"[Pending] Pending: {stats['pending']} | "
+        f"[OK] Completed: {stats['completed']} | "
+        f"[Progress] Progress: {stats['percentage']:.1f}%",
         style="bold"
     )
 
@@ -679,13 +679,12 @@ def list_tasks_cli(
 @cli_app.command("complete")
 def complete_task_cli(task_id: int = typer.Argument(..., help="Task ID to mark as complete")):
     """Mark a task as completed"""
-    task = cli_task_manager.get_task(task_id)
-    if not task:
-        console.print(f"❌ Task {task_id} not found", style="bold red")
+    if not cli_task_manager.toggle_task(task_id):
+        console.print(f"[ERROR] Task {task_id} not found", style="bold red")
         raise typer.Exit(1)
 
-    task.completed = True
-    console.print(f"✅ Task {task_id} marked as complete: {task.title}", style="bold green")
+    task = cli_task_manager.get_task(task_id)
+    console.print(f"[OK] Task {task_id} marked as complete: {task.title}", style="bold green")
 
 
 @cli_app.command("delete")
@@ -696,7 +695,7 @@ def delete_task_cli(
     """Delete a task"""
     task = cli_task_manager.get_task(task_id)
     if not task:
-        console.print(f"❌ Task {task_id} not found", style="bold red")
+        console.print(f"[ERROR] Task {task_id} not found", style="bold red")
         raise typer.Exit(1)
 
     if not yes:
@@ -706,7 +705,7 @@ def delete_task_cli(
             raise typer.Exit(0)
 
     cli_task_manager.delete_task(task_id)
-    console.print(f"🗑️  Task {task_id} deleted", style="bold red")
+    console.print(f"[DELETED] Task {task_id} deleted", style="bold red")
 
 
 @cli_app.command("stats")
@@ -715,10 +714,10 @@ def show_stats_cli():
     stats = cli_task_manager.get_stats()
 
     console.print(pyfiglet.figlet_format("STATS", font="banner3"), style="bold blue")
-    console.print(f"📊 Total Tasks: {stats['total']}", style="bold")
-    console.print(f"⏳ Pending: {stats['pending']}", style="yellow")
-    console.print(f"✅ Completed: {stats['completed']}", style="green")
-    console.print(f"📈 Progress: {stats['percentage']:.1f}%", style="cyan")
+    console.print(f"Stats Total Tasks: {stats['total']}", style="bold")
+    console.print(f"[Pending] Pending: {stats['pending']}", style="yellow")
+    console.print(f"[OK] Completed: {stats['completed']}", style="green")
+    console.print(f"[Progress] Progress: {stats['percentage']:.1f}%", style="cyan")
 
 
 def run() -> None:
