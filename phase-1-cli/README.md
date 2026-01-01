@@ -1,5 +1,7 @@
 # [Toony 2do](https://pypi.org/project/toony-2do/) - Modern Terminal Todo Application
 
+[![PyPI](https://img.shields.io/badge/PyPI-toony--2do-blue)](https://pypi.org/project/toony-2do/)
+
 A beautiful, interactive terminal todo application built with Python, featuring a stunning Text User Interface (TUI) with ASCII art branding.
 
 ## Features
