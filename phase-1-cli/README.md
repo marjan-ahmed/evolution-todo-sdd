@@ -1,4 +1,4 @@
-# Toony 2do - Modern Terminal Todo Application
+# [Toony 2do](https://pypi.org/project/toony-2do/) - Modern Terminal Todo Application
 
 A beautiful, interactive terminal todo application built with Python, featuring a stunning Text User Interface (TUI) with ASCII art branding.
 
