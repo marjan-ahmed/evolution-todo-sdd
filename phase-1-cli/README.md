@@ -4,6 +4,12 @@
 
 A beautiful, interactive terminal todo application built with Python, featuring a stunning Text User Interface (TUI) with ASCII art branding.
 
+## Demo Video
+
+[![Toony 2do Demo](https://img.youtube.com/vi/k6KA6uV8MnU/0.jpg)](https://youtu.be/k6KA6uV8MnU)
+
+*Watch the full demo on YouTube: [https://youtu.be/k6KA6uV8MnU](https://youtu.be/k6KA6uV8MnU)*
+
 ## Features
 
 - **Interactive TUI** - Full-featured text-based user interface with keyboard navigation
@@ -74,7 +80,7 @@ The application follows clean architecture principles:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/marjan-ahmed/evolution-todo-cloud-native.git
 cd phase-1-cli
 
 # Install dependencies with uv (recommended)
