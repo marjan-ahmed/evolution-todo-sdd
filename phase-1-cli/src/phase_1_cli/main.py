@@ -4,7 +4,7 @@ Built with Textual framework for beautiful, interactive terminal UI
 """
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -57,16 +57,24 @@ class Task:
 
     def to_dict(self) -> dict:
         """Convert task to dictionary"""
-        data = asdict(self)
-        data["created_at"] = self.created_at.isoformat()
-        return data
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "completed": self.completed,
+            "created_at": self.created_at.isoformat()
+        }
 
     @staticmethod
     def from_dict(data: dict) -> "Task":
         """Create task from dictionary"""
-        data = data.copy()
-        data["created_at"] = datetime.fromisoformat(data["created_at"])
-        return Task(**data)
+        return Task(
+            id=data["id"],
+            title=data["title"],
+            description=data.get("description", ""),
+            completed=data.get("completed", False),
+            created_at=datetime.fromisoformat(data["created_at"])
+        )
 
 
 class TaskManager:
